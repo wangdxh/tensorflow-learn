@@ -57,19 +57,19 @@ def inspect(dataset, labels, i):
     plt.imshow(dataset[i])
     plt.show()
 
-def getdata():
+def getdata(nslicenum):
     ''' get data from mat'''
     train = loadmat('d:/train_32x32.mat')
     print 'train ', train['X'].shape, train['y'].shape
     print type(train['X']), type(train['y'])
-    train_samples = train['X'][:, :, :, 0:5000].copy()
-    train_labels = train['y'][0:5000, :].copy()
+    train_samples = train['X'][:, :, :, 0:nslicenum].copy()
+    train_labels = train['y'][0:nslicenum, :].copy()
     print 'slice ', train_samples.shape, train_labels.shape
     del train
     return train_samples, train_labels
 def main():
     ''' go '''
-    train_samples, train_labels = getdata()
+    train_samples, train_labels = getdata(5000)
     _train_samples, _train_labels = reformat(train_samples, train_labels)
     normalize(_train_samples)
     inspect(_train_samples, _train_labels, 299)
