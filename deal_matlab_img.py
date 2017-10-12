@@ -9,7 +9,7 @@ http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
 
 pip install scipy-stack
 pip install scipy '''
-
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
@@ -57,18 +57,22 @@ def inspect(dataset, labels, i):
     plt.imshow(dataset[i])
     plt.show()
 
-def main():
-    ''' go '''
+def getdata():
+    ''' get data from mat'''
     train = loadmat('d:/train_32x32.mat')
     print 'train ', train['X'].shape, train['y'].shape
-    #test = loadmat('d:/test_32x32.mat')
-    #print 'test ', test['X'].shape, test['y'].shape
-
-    train_samples = train['X']
-    train_labels = train['y']
+    print type(train['X']), type(train['y'])
+    train_samples = train['X'][:, :, :, 0:5000].copy()
+    train_labels = train['y'][0:5000, :].copy()
+    print 'slice ', train_samples.shape, train_labels.shape
+    del train
+    return train_samples, train_labels
+def main():
+    ''' go '''
+    train_samples, train_labels = getdata()
     _train_samples, _train_labels = reformat(train_samples, train_labels)
     normalize(_train_samples)
-    inspect(_train_samples, _train_labels, 123)
+    inspect(_train_samples, _train_labels, 299)
 
 
 if __name__ == '__main__':
