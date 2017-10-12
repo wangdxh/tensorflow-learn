@@ -6,9 +6,7 @@ http://ufldl.stanford.edu/housenumbers/test_32x32.mat
 
 install this numpy in windows resolve from scipy.linalg import _fblas
 http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
-
-pip install scipy-stack
-pip install scipy '''
+'''
 import time
 import numpy as np
 import matplotlib.pyplot as plt
@@ -54,12 +52,13 @@ def inspect(dataset, labels, i):
         shape = dataset.shape
         dataset = dataset.reshape(shape[0], shape[1], shape[2])
     print labels[i]
+    plt.figure(figsize=(3, 3), dpi=80)
     plt.imshow(dataset[i])
     plt.show()
 
 def getdata(nslicenum):
     ''' get data from mat'''
-    train = loadmat('d:/train_32x32.mat')
+    train = loadmat('./train_32x32.mat')
     print 'train ', train['X'].shape, train['y'].shape
     print type(train['X']), type(train['y'])
     train_samples = train['X'][:, :, :, 0:nslicenum].copy()
@@ -67,12 +66,13 @@ def getdata(nslicenum):
     print 'slice ', train_samples.shape, train_labels.shape
     del train
     return train_samples, train_labels
+
 def main():
     ''' go '''
     train_samples, train_labels = getdata(5000)
     _train_samples, _train_labels = reformat(train_samples, train_labels)
     normalize(_train_samples)
-    inspect(_train_samples, _train_labels, 299)
+    inspect(_train_samples, _train_labels, 993)
 
 
 if __name__ == '__main__':
