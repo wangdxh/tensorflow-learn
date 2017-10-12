@@ -2,12 +2,17 @@
 #coding=utf-8
 ''' deal with matlab img  data is from
 http://ufldl.stanford.edu/housenumbers/train_32x32.mat
-http://ufldl.stanford.edu/housenumbers/test_32x32.mat'''
+http://ufldl.stanford.edu/housenumbers/test_32x32.mat
+
+install this numpy in windows resolve from scipy.linalg import _fblas
+http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
+
+pip install scipy-stack
+pip install scipy '''
 
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io import loadmat
-
 
 def reformat(samples, labels):
     '''
@@ -55,13 +60,14 @@ def inspect(dataset, labels, i):
 def main():
     ''' go '''
     train = loadmat('d:/train_32x32.mat')
-    test = loadmat('d:/test_32x32.mat')
     print 'train ', train['X'].shape, train['y'].shape
-    print 'test ', test['X'].shape, test['y'].shape
+    #test = loadmat('d:/test_32x32.mat')
+    #print 'test ', test['X'].shape, test['y'].shape
 
     train_samples = train['X']
     train_labels = train['y']
     _train_samples, _train_labels = reformat(train_samples, train_labels)
+    normalize(_train_samples)
     inspect(_train_samples, _train_labels, 123)
 
 
