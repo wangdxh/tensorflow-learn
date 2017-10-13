@@ -13,6 +13,10 @@ def main():
     W = tf.Variable(tf.random_uniform([1, 2], -1.0, 1.0))
     y = tf.matmul(W, x_data) + b
 
+    # b and W will be change every train
+    cost = tf.reduce_mean(tf.square(y - y_data))
+    train = tf.train.GradientDescentOptimizer(0.5).minimize(cost)
+
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
 
