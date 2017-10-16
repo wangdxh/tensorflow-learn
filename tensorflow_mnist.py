@@ -5,8 +5,9 @@ if can not download from http url, u can download yourself from here:
 donwload data http://yann.lecun.com/exdb/mnist/ put in current directory
 https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/tutorials/mnist/mnist_softmax.py
 '''
+# pylint: disable=invalid-name
+
 import logging as log
-import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow.examples.tutorials.mnist import input_data
 import tensorflow as tf
