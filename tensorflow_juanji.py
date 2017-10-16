@@ -6,6 +6,12 @@
 from tensorflow.examples.tutorials.mnist import input_data
 import tensorflow as tf
 
+from PIL import Image
+import matplotlib.pyplot as plt
+import numpy as np
+import logging as log
+log.basicConfig(level=log.DEBUG)
+
 def deepnn(x):
     """deepnn builds the graph for a deep net for classifying digits.
     Args:
@@ -90,6 +96,19 @@ def bias_variable(shape):
     return tf.Variable(initial)
 
 
+def getimgdata(filepath):
+    ''' must be 28*28, rgb24bits ./mydrawnum3.bmp '''
+    imgdata = np.asarray(Image.open(filepath))
+    rgb = np.add.reduce(imgdata, keepdims=True, axis=2)
+    rgb = rgb / 3.0
+    rgb = rgb / 128.0 - 1.0
+    log.debug('%s %s', imgdata.shape, rgb.shape)
+    if rgb.shape[2] == 1:
+        shape = rgb.shape
+        rgb = rgb.reshape(shape[0],shape[1])
+    log.debug(rgb.shape)
+    return rgb
+
 def main(_):
     # Import data
     mnist = input_data.read_data_sets('./', one_hot=True)
@@ -131,9 +150,18 @@ def main(_):
                 print('step %d, training accuracy %g' % (i, train_accuracy))
             train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
         print('abc')
-        batch = mnist.test.next_batch(2000)
-        print('test accuracy %g' % accuracy.eval(feed_dict={\
-            x: batch[0], y_: batch[1], keep_prob: 1.0}))
+
+        operate = 1
+        if operate == 0:
+            batch = mnist.test.next_batch(2000)
+            print('test accuracy %g' % accuracy.eval(feed_dict={\
+                  x: batch[0], y_: batch[1], keep_prob: 1.0}))
+        elif operate == 1:
+            myimg = getimgdata('./mydrawnum3.bmp')
+            ndimg = myimg.reshape(1, 28*28)
+            log.debug(sess.run([y_conv, tf.argmax(y_conv, 1)], feed_dict={x:ndimg, keep_prob: 1.0}))
+            plt.imshow(myimg)
+            plt.show()
         #x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
 
 if __name__ == '__main__':

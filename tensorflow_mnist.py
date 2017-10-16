@@ -9,10 +9,26 @@ https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/tutoria
 
 import logging as log
 import matplotlib.pyplot as plt
+import numpy as np
 from tensorflow.examples.tutorials.mnist import input_data
 import tensorflow as tf
+from PIL import Image
 
 log.basicConfig(level=log.DEBUG)
+
+
+def getimgdata(filepath):
+    ''' must be 28*28, rgb24bits ./mydrawnum3.bmp '''
+    imgdata = np.asarray(Image.open(filepath))
+    rgb = np.add.reduce(imgdata, keepdims=True, axis=2)
+    rgb = rgb / 3.0
+    rgb = rgb / 128.0 - 1.0
+    log.debug('%s %s', imgdata.shape, rgb.shape)
+    if rgb.shape[2] == 1:
+        shape = rgb.shape
+        rgb = rgb.reshape(shape[0],shape[1])
+    log.debug(rgb.shape)
+    return rgb
 
 def main():
     ''' main '''
@@ -39,13 +55,15 @@ def main():
             batch_xdata, batch_ydata = mnist.train.next_batch(100)
             sess.run(train, feed_dict={x_data:batch_xdata, y_data:batch_ydata})
 
-        test_all = False
-        if test_all is True:
+        # test from my draw
+
+        test_all = 2
+        if test_all == 0:
             correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_data, 1))
             accuray = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
             log.debug(sess.run(accuray,
                                feed_dict={x_data:mnist.test.images, y_data:mnist.test.labels}))
-        else:
+        elif test_all == 1:
             batch_xdata, batch_ydata = mnist.test.next_batch(2)
             log.debug(batch_ydata)
             log.debug(sess.run(y, feed_dict={x_data:batch_xdata, y_data:batch_ydata}))
@@ -57,6 +75,12 @@ def main():
             plt.subplot(1, 2, 2)
             plt.imshow(batch_xdata[1])
             plt.show()
-
+        elif test_all == 2:
+            myimg = getimgdata('./mydrawnum3.bmp')
+            ndimg = myimg.reshape(1, 28*28)
+            log.debug(sess.run([y, tf.argmax(y, 1)], feed_dict={x_data:ndimg}))
+            plt.imshow(myimg)
+            plt.show()
 if __name__ == '__main__':
     main()
+    #myimg = getimgdata('./mydrawnum3.bmp')
