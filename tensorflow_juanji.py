@@ -3,14 +3,12 @@
 ''' juanji convolution nn'''
 # pylint: disable=invalid-name
 
+import os
+import logging as log
+import matplotlib.pyplot as plt
+import common
 from tensorflow.examples.tutorials.mnist import input_data
 import tensorflow as tf
-
-from PIL import Image
-import matplotlib.pyplot as plt
-import numpy as np
-import logging as log
-log.basicConfig(level=log.DEBUG)
 
 def deepnn(x):
     """deepnn builds the graph for a deep net for classifying digits.
@@ -81,7 +79,7 @@ def conv2d(x, W):
 def max_pool_2x2(x):
     """max_pool_2x2 downsamples a feature map by 2X."""
     return tf.nn.max_pool(x, ksize=[1, 2, 2, 1],
-                            strides=[1, 2, 2, 1], padding='SAME')
+                          strides=[1, 2, 2, 1], padding='SAME')
 
 
 def weight_variable(shape):
@@ -95,21 +93,8 @@ def bias_variable(shape):
     initial = tf.constant(0.1, shape=shape)
     return tf.Variable(initial)
 
-
-def getimgdata(filepath):
-    ''' must be 28*28, rgb24bits ./mydrawnum3.bmp '''
-    imgdata = np.asarray(Image.open(filepath))
-    rgb = np.add.reduce(imgdata, keepdims=True, axis=2)
-    rgb = rgb / 3.0
-    rgb = rgb / 128.0 - 1.0
-    log.debug('%s %s', imgdata.shape, rgb.shape)
-    if rgb.shape[2] == 1:
-        shape = rgb.shape
-        rgb = rgb.reshape(shape[0],shape[1])
-    log.debug(rgb.shape)
-    return rgb
-
 def main(_):
+    ''' main'''
     # Import data
     mnist = input_data.read_data_sets('./', one_hot=True)
 
@@ -140,29 +125,38 @@ def main(_):
     train_writer = tf.summary.FileWriter(graph_location)
     train_writer.add_graph(tf.get_default_graph())'''
 
+    savepath = './checkpoint/juanji.ckpt'
+    istraining = 0
+    if os.path.exists(savepath+'.meta') is not True:
+        istraining = 1
+
+    saver = tf.train.Saver()
+    if istraining == 1:
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+            for i in range(2000):
+                batch = mnist.train.next_batch(50)
+                if i % 100 == 0:
+                    train_accuracy = accuracy.eval(feed_dict={
+                        x: batch[0], y_: batch[1], keep_prob: 1.0})
+                    log.debug('step %d, training accuracy %g', i, train_accuracy)
+                train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+
+            batch = mnist.test.next_batch(2000)
+            log.debug('test accuracy %g',
+                      accuracy.eval(feed_dict={x: batch[0], y_: batch[1], keep_prob: 1.0}))
+            saver.save(sess, savepath)
+
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        for i in range(2000):
-            batch = mnist.train.next_batch(50)
-            if i % 100 == 0:
-                train_accuracy = accuracy.eval(feed_dict={
-                    x: batch[0], y_: batch[1], keep_prob: 1.0})
-                print('step %d, training accuracy %g' % (i, train_accuracy))
-            train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
-        print('abc')
-
-        operate = 1
-        if operate == 0:
-            batch = mnist.test.next_batch(2000)
-            print('test accuracy %g' % accuracy.eval(feed_dict={\
-                  x: batch[0], y_: batch[1], keep_prob: 1.0}))
-        elif operate == 1:
-            myimg = getimgdata('./mydrawnum3.bmp')
-            ndimg = myimg.reshape(1, 28*28)
-            log.debug(sess.run([y_conv, tf.argmax(y_conv, 1)], feed_dict={x:ndimg, keep_prob: 1.0}))
-            plt.imshow(myimg)
-            plt.show()
-        #x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
+        saver.restore(sess, savepath)
+        #myimg = common.getimgdata('./mydrawnum3.bmp')
+        myimg = common.getimgdata('./image/number3.png')
+        ndimg = myimg.reshape(1, 28 * 28)
+        log.debug(sess.run([y_conv, tf.argmax(y_conv, 1)],
+                           feed_dict={x: ndimg, keep_prob: 1.0}))
+        plt.imshow(myimg)
+        plt.show()
 
 if __name__ == '__main__':
     main(0)

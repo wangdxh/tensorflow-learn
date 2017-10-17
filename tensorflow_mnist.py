@@ -9,26 +9,9 @@ https://github.com/tensorflow/tensorflow/blob/master/tensorflow/examples/tutoria
 
 import logging as log
 import matplotlib.pyplot as plt
-import numpy as np
+import common
 from tensorflow.examples.tutorials.mnist import input_data
 import tensorflow as tf
-from PIL import Image
-
-log.basicConfig(level=log.DEBUG)
-
-
-def getimgdata(filepath):
-    ''' must be 28*28, rgb24bits ./mydrawnum3.bmp '''
-    imgdata = np.asarray(Image.open(filepath))
-    rgb = np.add.reduce(imgdata, keepdims=True, axis=2)
-    rgb = rgb / 3.0
-    rgb = rgb / 128.0 - 1.0
-    log.debug('%s %s', imgdata.shape, rgb.shape)
-    if rgb.shape[2] == 1:
-        shape = rgb.shape
-        rgb = rgb.reshape(shape[0],shape[1])
-    log.debug(rgb.shape)
-    return rgb
 
 def main():
     ''' main '''
@@ -76,7 +59,7 @@ def main():
             plt.imshow(batch_xdata[1])
             plt.show()
         elif test_all == 2:
-            myimg = getimgdata('./mydrawnum3.bmp')
+            myimg = common.getimgdata('./image/number3.jpg')
             ndimg = myimg.reshape(1, 28*28)
             log.debug(sess.run([y, tf.argmax(y, 1)], feed_dict={x_data:ndimg}))
             plt.imshow(myimg)
