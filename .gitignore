@@ -306,3 +306,7 @@ $RECYCLE.BIN/
 *.mat
 
 *.gz
+*.ckpt
+*.ckpt.*
+*.pyc
+*.bak
