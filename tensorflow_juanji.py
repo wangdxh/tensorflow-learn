@@ -156,7 +156,7 @@ def main(_):
         log.debug(sess.run([y_conv, tf.argmax(y_conv, 1)],
                            feed_dict={x: ndimg, keep_prob: 1.0}))
         plt.imshow(myimg)
-        plt.show()
+        common.blockplt()
 
 if __name__ == '__main__':
     main(0)

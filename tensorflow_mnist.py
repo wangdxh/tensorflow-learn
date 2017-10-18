@@ -40,7 +40,7 @@ def main():
 
         # test from my draw
 
-        test_all = 2
+        test_all = 1
         if test_all == 0:
             correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_data, 1))
             accuray = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
@@ -57,13 +57,13 @@ def main():
             plt.imshow(batch_xdata[0])
             plt.subplot(1, 2, 2)
             plt.imshow(batch_xdata[1])
-            plt.show()
+            common.blockplt()
         elif test_all == 2:
             myimg = common.getimgdata('./image/number3.jpg')
             ndimg = myimg.reshape(1, 28*28)
             log.debug(sess.run([y, tf.argmax(y, 1)], feed_dict={x_data:ndimg}))
             plt.imshow(myimg)
-            plt.show()
+            common.blockplt()
 if __name__ == '__main__':
     main()
     #myimg = getimgdata('./mydrawnum3.bmp')

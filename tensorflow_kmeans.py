@@ -4,6 +4,8 @@
 plt scatter
 http://blog.csdn.net/u013634684/article/details/49646311
 http://blog.csdn.net/freedom098/article/details/56021013
+http://download.csdn.net/download/u011433684/9709997
+
 '''
 # pylint: disable=invalid-name
 
@@ -18,186 +20,78 @@ from numpy.linalg import cholesky
 from tensorflow.examples.tutorials.mnist import input_data
 import tensorflow as tf
 
-def gettestdata():
+def gettestdata(sampleNo):
     '''二维正态分布'''
-    sampleNo = 100
     mu = np.array([[1, 5]]) # 0-aix mean is1， 1-aix mean is 5
     sigma = np.array([[0, 2], [1, 3]]) # sigma
     #sigma = np.array([[2, 0], [3, 1]]) # sigma
     return np.dot(np.random.randn(sampleNo, 2), sigma) + mu
 
-def TFKMeansCluster(vectors, noofclusters):
-    """
-    K-Means Clustering using TensorFlow.
-    'vectors' should be a n*k 2-D NumPy array, where n is the number
-    of vectors of dimensionality k.
-    'noofclusters' should be an integer.
-    """
+K = 4 # 类别数目
+MAX_ITERS = 100 # 最大迭代次数
+M = 300 # 样本点数目
 
-    noofclusters = int(noofclusters)
-    assert noofclusters < len(vectors)
+def clusterMean(data, nid, num):
+    ''' cluster mean'''
+    total = tf.unsorted_segment_sum(data, nid, num) # 第一个参数是tensor，第二个参数是簇标签，第三个是簇数目
+    count = tf.unsorted_segment_sum(tf.ones_like(data), nid, num)
+    return total/count
 
-    #Find out the dimensionality
-    dim = len(vectors[0])
+def dothejob():
+    ''' 构建graph'''
+    data = gettestdata(M)
 
-    #Will help select random centroids from among the available vectors
-    vector_indices = list(range(len(vectors)))
-    random.shuffle(vector_indices)
+    points = tf.Variable(data)
+    cluster = tf.Variable(tf.zeros([M], dtype=tf.int64))
+    centers = tf.Variable(tf.slice(points.initialized_value(), [0, 0], [K, 2]))# 将原始数据前k个点当做初始中心
 
-    #GRAPH OF COMPUTATION
-    #We initialize a new graph and set it as the default during each run
-    #of this algorithm. This ensures that as this function is called
-    #multiple times, the default graph doesn't keep getting crowded with
-    #unused ops and Variables from previous function calls.
+    repCenters = tf.reshape(tf.tile(centers, [M, 1]), [M, K, 2]) # 复制操作，便于矩阵批量计算距离
+    repPoints = tf.reshape(tf.tile(points, [1, K]), [M, K, 2])
+    sumSqure = tf.reduce_sum(tf.square(repCenters-repPoints), reduction_indices=2) # 计算距离 m*k
+    bestCenter = tf.argmin(sumSqure, axis=1)  # 寻找最近的簇中心 牛逼啊真是人才
 
-    graph = tf.Graph()
+    change = tf.reduce_any(tf.not_equal(bestCenter, cluster)) # 检测簇中心是否还在变化
+    means = clusterMean(points, bestCenter, K)  # 计算簇内均值 great job
+    # 将簇内均值变成新的簇中心，同时分类结果也要更新
+    with tf.control_dependencies([change]):
+        update = tf.group(centers.assign(means), cluster.assign(bestCenter)) # 复制函数
 
-    with graph.as_default():
+    with tf.Session() as sess:
+        sess.run(tf.initialize_all_variables())
+        changed = True
+        iterNum = 0
+        while changed and iterNum < MAX_ITERS:
+            iterNum += 1
 
-        #SESSION OF COMPUTATION
+            [changed, _] = sess.run([change, update])
+            [centersArr, clusterArr] = sess.run([centers, cluster])
 
-        sess = tf.Session()
+            common.showkmeansresult(data, centersArr, clusterArr, str(iterNum))
+    common.blockplt()
 
-        ##CONSTRUCTING THE ELEMENTS OF COMPUTATION
+def testtile():
+    ''' test tile'''
+    temp = tf.tile([1, 2, 3], [2])
+    temp2 = tf.tile([[1, 2], [3, 4], [5, 6]], [2, 3])
+    temp3 = tf.square(temp2)
+    temp4 = tf.reshape(temp2, [6, 3, 2])
+    temp5 = tf.reduce_sum(temp4, reduction_indices=2)# the index demension will be and to one number
+    temp6 = tf.argmin(temp5, axis=1)
+    total = tf.unsorted_segment_sum([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]], [0, 1, 2, 0, 1], 3)
 
-        ##First lets ensure we have a Variable vector for each centroid,
-        ##initialized to one of the vectors from the available data points
-        centroids = [tf.Variable((vectors[vector_indices[i]]))
-                     for i in range(noofclusters)]
-        ##These nodes will assign the centroid Variables the appropriate
-        ##values
-        centroid_value = tf.placeholder("float64", [dim])
-        cent_assigns = []
-        for centroid in centroids:
-            cent_assigns.append(tf.assign(centroid, centroid_value))
-
-        ##Variables for cluster assignments of individual vectors(initialized
-        ##to 0 at first)
-        assignments = [tf.Variable(0) for i in range(len(vectors))]
-        ##These nodes will assign an assignment Variable the appropriate
-        ##value
-        assignment_value = tf.placeholder("int32")
-        cluster_assigns = []
-        for assignment in assignments:
-            cluster_assigns.append(tf.assign(assignment,
-                                             assignment_value))
-
-        ##Now lets construct the node that will compute the mean
-        #The placeholder for the input
-        mean_input = tf.placeholder("float", [None, dim])
-        #The Node/op takes the input and computes a mean along the 0th
-        #dimension, i.e. the list of input vectors
-        mean_op = tf.reduce_mean(mean_input, 0)
-
-        ##Node for computing Euclidean distances
-        #Placeholders for input
-        v1 = tf.placeholder("float", [dim])
-        v2 = tf.placeholder("float", [dim])
-        euclid_dist = tf.sqrt(tf.reduce_sum(tf.pow(tf.subtract(v1, v2), 2)))
-        
-
-        ##This node will figure out which cluster to assign a vector to,
-        ##based on Euclidean distances of the vector from the centroids.
-        #Placeholder for input
-        centroid_distances = tf.placeholder("float", [noofclusters])
-        cluster_assignment = tf.argmin(centroid_distances, 0)
-
-        ##INITIALIZING STATE VARIABLES
-
-        ##This will help initialization of all Variables defined with respect
-        ##to the graph. The Variable-initializer should be defined after
-        ##all the Variables have been constructed, so that each of them
-        ##will be included in the initialization.
-        init_op = tf.global_variables_initializer()
-
-        #Initialize all variables
-        sess.run(init_op)
-
-        ##CLUSTERING ITERATIONS
-
-        #Now perform the Expectation-Maximization steps of K-Means clustering
-        #iterations. To keep things simple, we will only do a set number of
-        #iterations, instead of using a Stopping Criterion.
-        noofiterations = 5
-        for iteration_n in range(noofiterations):
-
-            ##EXPECTATION STEP
-            ##Based on the centroid locations till last iteration, compute
-            ##the _expected_ centroid assignments.
-            #Iterate over each vector
-            for vector_n in range(len(vectors)):
-                vect = vectors[vector_n]
-                #Compute Euclidean distance between this vector and each
-                #centroid. Remember that this list cannot be named
-                #'centroid_distances', since that is the input to the
-                #cluster assignment node.
-                distances = [sess.run(euclid_dist, feed_dict={
-                    v1: vect, v2: sess.run(centroid)})
-                             for centroid in centroids]
-                #Now use the cluster assignment node, with the distances
-                #as the input
-                assignment = sess.run(cluster_assignment, feed_dict = {
-                    centroid_distances: distances})
-                #Now assign the value to the appropriate state variable
-                sess.run(cluster_assigns[vector_n], feed_dict={
-                    assignment_value: assignment})
-
-            ##MAXIMIZATION STEP
-            #Based on the expected state computed from the Expectation Step,
-            #compute the locations of the centroids so as to maximize the
-            #overall objective of minimizing within-cluster Sum-of-Squares
-            for cluster_n in range(noofclusters):
-                #Collect all the vectors assigned to this cluster
-                assigned_vects = [vectors[i] for i in range(len(vectors))
-                                  if sess.run(assignments[i]) == cluster_n]
-                #Compute new centroid location
-                new_location = sess.run(mean_op, feed_dict={
-                    mean_input: np.array(assigned_vects)})
-                #Assign value to appropriate variable
-                sess.run(cent_assigns[cluster_n], feed_dict={
-                    centroid_value: new_location})
-
-        #Return centroids and assignments
-        centroids = sess.run(centroids)
-        assignments = sess.run(assignments)
-        return centroids, assignments
-
-def main(_):
-    '''main '''
-    pass
+    data = tf.Variable([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]])
+    count = tf.unsorted_segment_sum(tf.ones_like(data.initialized_value()), [0, 1, 2, 0, 1], 3)
+    with tf.Session() as sess:
+        log.debug(sess.run(temp))
+        log.debug(sess.run(temp2))
+        log.debug(sess.run(temp3))
+        log.debug(sess.run(temp4))
+        log.debug(sess.run(temp5))
+        log.debug('%s %s', sess.run(temp6), type(sess.run(temp6)))
+        log.debug(sess.run(total))
+        log.debug(sess.run(count))
+        log.debug(sess.run(total/count))
 
 if __name__ == '__main__':
-    #main(0)
-    srcdata = gettestdata()
-    center, result = TFKMeansCluster(srcdata, 4)
-    print(center)
-    print(result)
-    '''result = np.array(result)
-    shape = result.shape
-    z1 = result.reshape(shape[0], 1)
-    color = 50 * np.column_stack((z1, z1[:, 0], z1[:, 0], z1[:, 0]))'''
-    '''color = []
-    for item in result:
-        if item == 0:
-            color.append('b')
-        elif item == 1:
-            color.append('g')
-        elif item == 2:
-            color.append('b')
-        elif item == 3:
-            color.append('r')'''
-    fig = plt.Figure()
-    corlist = ['r', 'g', 'b', 'y', 'c', 'm', 'k']
-    color = [corlist[item] for item in result]
-    plt.scatter(srcdata[:, 0], srcdata[:, 1], marker='o', c=color, s=30)
-    x = [item[0] for item in center]
-    y = [item[1] for item in center]
-    plt.scatter(x, y, marker='x', c='m', s = 60)
-    plt.ioff()
-    plt.show()
-    print('xxxxxxxxxxxxxxxxxxxx')
-    fig.clear()
-    
-    #plt.scatter(srcdata[:, 0], srcdata[:, 1], marker='o', c=color, s=30)
-    plt.scatter(x, y, marker='x', c='k', s = 10)
-    time.sleep(1000)
+    dothejob()
+    #testtile()
