@@ -1,0 +1,23 @@
+#!/usr/bin/python
+#coding=utf-8
+''' face detect
+https://github.com/seathiefwang/FaceRecognition-tensorflow
+http://tumumu.cn/2017/05/02/deep-learning-face/
+'''
+# pylint: disable=invalid-name
+import logging as log
+import matplotlib.pyplot as plt
+import common
+import numpy as np
+from tensorflow.examples.tutorials.mnist import input_data
+import tensorflow as tf
+
+
+
+
+def main(_):
+    '''main '''
+    pass
+
+if __name__ == '__main__':
+    main(0)
