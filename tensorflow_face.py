@@ -67,6 +67,7 @@ def getface(imgpath, outdir):
     for f_x, f_y, f_w, f_h in faces:
         n += 1
         face = img[f_y:f_y+f_h, f_x:f_x+f_w]
+        # may be do not need resize now
         face = cv2.resize(face, (64, 64))
         for inx, (alpha, bias) in enumerate([[1, 1], [1, 50], [0.5, 0]]):
             facetemp = relight(face, alpha, bias)

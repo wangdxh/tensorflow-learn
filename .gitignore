@@ -310,3 +310,7 @@ $RECYCLE.BIN/
 *.ckpt.*
 *.pyc
 *.bak
+
+image/my_faces/
+image/people_faces/
+checkpoint/
