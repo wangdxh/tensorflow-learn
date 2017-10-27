@@ -128,6 +128,9 @@ def main(_):
         generateface([['./image/test_people_images', DIR_TEST_PEOPLE_FACE]])
         test_x, test_y = readimage([[DIR_TEST_PEOPLE_FACE, [0, 1]]])
         test_x = test_x.astype(np.float32) / 255.0
+
+        log.debug("%s %s y is %s", test_x.shape, test_y.shape, test_y)
+
         log.debug('len of test_x : %s', test_x.shape)
         log.debug('y is %s', test_y)
         log.debug(myconv.validate(test_x, test_y, savepath))

@@ -92,6 +92,10 @@ def train(train_x, train_y, tfsavepath):
         batch_size = 10
         num_batch = len(train_x) // 10
         for n in range(10):
+            r = np.random.permutation(len(train_x))
+            train_x = train_x[r, :]
+            train_y = train_y[r, :]
+
             for i in range(num_batch):
                 batch_x = train_x[i*batch_size : (i+1)*batch_size]
                 batch_y = train_y[i*batch_size : (i+1)*batch_size]
