@@ -4,6 +4,7 @@ Building Machine Learning Projects with TensorFlow
 book pdf:
 
 链接:http://pan.baidu.com/s/1hsQqZLM  密码:nasm
+
 https://github.com/wangdxh/Building-Machine-Learning-Projects-with-TensorFlow/
 
 
