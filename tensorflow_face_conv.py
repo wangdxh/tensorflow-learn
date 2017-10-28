@@ -40,7 +40,7 @@ def dropout(x, keep):
     ''' drop out'''
     return tf.nn.dropout(x, keep)
 
-def cnnLayer():
+def cnnLayer(classnum):
     ''' create cnn layer'''
     # 第一层
     W1 = weightVariable([3, 3, 3, 32]) # 卷积核大小(3,3)， 输入通道(3)， 输出通道(32)
@@ -72,8 +72,8 @@ def cnnLayer():
     dropf = dropout(dense, keep_prob_75)
 
     # 输出层
-    Wout = weightVariable([512, 2])
-    bout = weightVariable([2])
+    Wout = weightVariable([512, classnum])
+    bout = weightVariable([classnum])
     #out = tf.matmul(dropf, Wout) + bout
     out = tf.add(tf.matmul(dropf, Wout), bout)
     return out
@@ -81,7 +81,7 @@ def cnnLayer():
 def train(train_x, train_y, tfsavepath):
     ''' train'''
     log.debug('train')
-    out = cnnLayer()
+    out = cnnLayer(train_y.shape[1])
     cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=out, labels=y_data))
     train_step = tf.train.AdamOptimizer(0.01).minimize(cross_entropy)
     accuracy = tf.reduce_mean(tf.cast(tf.equal(tf.argmax(out, 1), tf.argmax(y_data, 1)), tf.float32))
@@ -92,16 +92,16 @@ def train(train_x, train_y, tfsavepath):
         batch_size = 10
         num_batch = len(train_x) // 10
         for n in range(10):
-            '''r = np.random.permutation(len(train_x))
+            r = np.random.permutation(len(train_x))
             train_x = train_x[r, :]
-            train_y = train_y[r, :]'''
+            train_y = train_y[r, :]
 
             for i in range(num_batch):
                 batch_x = train_x[i*batch_size : (i+1)*batch_size]
                 batch_y = train_y[i*batch_size : (i+1)*batch_size]
                 _, loss = sess.run([train_step, cross_entropy],\
                                    feed_dict={x_data:batch_x, y_data:batch_y,
-                                              keep_prob_5:0.5, keep_prob_75:0.75})
+                                              keep_prob_5:0.75, keep_prob_75:0.75})
 
                 print(n*num_batch+i, loss)
 
@@ -110,18 +110,18 @@ def train(train_x, train_y, tfsavepath):
         print('after 10 times run: accuracy is ', acc)
         saver.save(sess, tfsavepath)
 
-def validate(test_x, test_y, tfsavepath):
+def validate(test_x, tfsavepath):
     ''' validate '''
-    output = cnnLayer()
+    output = cnnLayer(2)
     #predict = tf.equal(tf.argmax(output, 1), tf.argmax(y_data, 1))
     predict = output
 
     saver = tf.train.Saver()
     with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
+        #sess.run(tf.global_variables_initializer())
         saver.restore(sess, tfsavepath)
         res = sess.run([predict, tf.argmax(output, 1)],
-                       feed_dict={x_data: test_x, y_data: test_y,
+                       feed_dict={x_data: test_x,
                                   keep_prob_5:1.0, keep_prob_75: 1.0})
         return res
 

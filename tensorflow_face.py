@@ -138,18 +138,56 @@ def main(_):
         myconv.train(train_x, train_y, savepath)
         log.debug('training is over, please run again')
     else:
-        generateface([['./image/trainimages', './image/trainfaces']])
-        pathlabelpair, indextoname = getfileandlabel('./image/trainfaces')
-        test_x, test_y = readimage(pathlabelpair)
+        testfromcamera(savepath)
+        
+        #print(np.column_stack((out, argmax)))
 
-        test_x = test_x.astype(np.float32) / 255.0
+def testfromcamera(chkpoint):
+    camera = cv2.VideoCapture(0)
+    haar = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    pathlabelpair, indextoname = getfileandlabel('./image/trainfaces')
+    output = myconv.cnnLayer(len(pathlabelpair))
+    #predict = tf.equal(tf.argmax(output, 1), tf.argmax(y_data, 1))
+    predict = output
 
-        log.debug("%s %s y is %s", test_x.shape, test_y.shape, test_y)
+    saver = tf.train.Saver()
+    with tf.Session() as sess:
+        #sess.run(tf.global_variables_initializer())
+        saver.restore(sess, chkpoint)
+        
 
-        log.debug('len of test_x : %s', test_x.shape)
-        log.debug('y is %s', test_y)
-        out, argmax = myconv.validate(test_x, test_y, savepath)
-        print(np.column_stack((out, argmax)))
+        n = 1
+        while 1:
+            if (n <= 20000):
+                print('It`s processing %s image.' % n)
+                # 读帧
+                success, img = camera.read()
+
+                gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                faces = haar.detectMultiScale(gray_img, 1.3, 5)
+                for f_x, f_y, f_w, f_h in faces:
+                    face = img[f_y:f_y+f_h, f_x:f_x+f_w]
+                    face = cv2.resize(face, (IMGSIZE, IMGSIZE))
+                    #could deal with face to train
+                    test_x = np.array([face])
+                    test_x = test_x.astype(np.float32) / 255.0
+                    
+                    res = sess.run([predict, tf.argmax(output, 1)],\
+                                   feed_dict={myconv.x_data: test_x,\
+                                   myconv.keep_prob_5:1.0, myconv.keep_prob_75: 1.0})
+                    print(res)
+
+                    cv2.putText(img, indextoname[res[1][0]], (f_x, f_y - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, 255, 2)  #显示名字
+                    img = cv2.rectangle(img, (f_x, f_y), (f_x + f_w, f_y + f_h), (255, 0, 0), 2)
+                    n+=1
+                cv2.imshow('img', img)
+                key = cv2.waitKey(30) & 0xff
+                if key == 27:
+                    break
+            else:
+                break
+    camera.release()
+    cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     # first generate all face
