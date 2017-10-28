@@ -13,7 +13,7 @@ import cv2
 
 SIZE = 64
 x_data = tf.placeholder(tf.float32, [None, SIZE, SIZE, 3])
-y_data = tf.placeholder(tf.float32, [None, 2])
+y_data = tf.placeholder(tf.float32, [None, None])
 
 keep_prob_5 = tf.placeholder(tf.float32)
 keep_prob_75 = tf.placeholder(tf.float32)
@@ -92,9 +92,9 @@ def train(train_x, train_y, tfsavepath):
         batch_size = 10
         num_batch = len(train_x) // 10
         for n in range(10):
-            r = np.random.permutation(len(train_x))
+            '''r = np.random.permutation(len(train_x))
             train_x = train_x[r, :]
-            train_y = train_y[r, :]
+            train_y = train_y[r, :]'''
 
             for i in range(num_batch):
                 batch_x = train_x[i*batch_size : (i+1)*batch_size]
@@ -113,14 +113,16 @@ def train(train_x, train_y, tfsavepath):
 def validate(test_x, test_y, tfsavepath):
     ''' validate '''
     output = cnnLayer()
-    predict = tf.equal(tf.argmax(output, 1), tf.argmax(y_data, 1))
+    #predict = tf.equal(tf.argmax(output, 1), tf.argmax(y_data, 1))
+    predict = output
 
     saver = tf.train.Saver()
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         saver.restore(sess, tfsavepath)
-        res = sess.run(predict, feed_dict={x_data: test_x, y_data: test_y,
-                                           keep_prob_5:1.0, keep_prob_75: 1.0})
+        res = sess.run([predict, tf.argmax(output, 1)],
+                       feed_dict={x_data: test_x, y_data: test_y,
+                                  keep_prob_5:1.0, keep_prob_75: 1.0})
         return res
 
 if __name__ == '__main__':
