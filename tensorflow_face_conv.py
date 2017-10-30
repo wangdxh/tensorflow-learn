@@ -21,11 +21,13 @@ keep_prob_75 = tf.placeholder(tf.float32)
 def weightVariable(shape):
     ''' build weight variable'''
     init = tf.random_normal(shape, stddev=0.01)
+    #init = tf.truncated_normal(shape, stddev=0.01)
     return tf.Variable(init)
 
 def biasVariable(shape):
     ''' build bias variable'''
     init = tf.random_normal(shape)
+    #init = tf.truncated_normal(shape, stddev=0.01)
     return tf.Variable(init)
 
 def conv2d(x, W):
